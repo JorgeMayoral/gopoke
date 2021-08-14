@@ -7,8 +7,8 @@ import (
 	"os"
 	"strconv"
 
-	gopoke "github.com/JorgeMayoral/gopoke/src/internal"
 	"github.com/JorgeMayoral/gopoke/src/internal/errors"
+	"github.com/JorgeMayoral/gopoke/src/internal/fetching"
 	"github.com/spf13/cobra"
 )
 
@@ -22,11 +22,11 @@ const limitFlag = "limit"
 const offsetFlag = "offset"
 
 // InitPokemonsCmd initialize pokemons command
-func InitPokemonsCmd(repository gopoke.PokemonRepo) *cobra.Command {
+func InitPokemonsCmd(service fetching.Service) *cobra.Command {
 	pokemonsCmd := &cobra.Command{
 		Use:   "pokemons",
 		Short: "Print data about pokemons",
-		Run:   runPokemonsFn(repository),
+		Run:   runPokemonsFn(service),
 	}
 
 	pokemonsCmd.Flags().StringP(idFlag, "i", "", "id of the pokemon")
@@ -38,7 +38,7 @@ func InitPokemonsCmd(repository gopoke.PokemonRepo) *cobra.Command {
 	return pokemonsCmd
 }
 
-func runPokemonsFn(repository gopoke.PokemonRepo) CobraFn {
+func runPokemonsFn(service fetching.Service) CobraFn {
 	return func(cmd *cobra.Command, args []string) {
 		id, _ := cmd.Flags().GetString(idFlag)
 		output, _ := cmd.Flags().GetBool(outputFlag)
@@ -48,7 +48,7 @@ func runPokemonsFn(repository gopoke.PokemonRepo) CobraFn {
 
 		if id != "" {
 			i, _ := strconv.Atoi(id)
-			pokemon, err := repository.GetPokemonById(i)
+			pokemon, err := service.FetchByID(i)
 
 			if errors.IsDataUnreacheable(err) {
 				log.Fatal(err)
@@ -79,7 +79,7 @@ func runPokemonsFn(repository gopoke.PokemonRepo) CobraFn {
 		} else {
 			l, _ := strconv.Atoi(limit)
 			o, _ := strconv.Atoi(offset)
-			pokemons, err := repository.GetPokemons(l, o)
+			pokemons, err := service.FetchPokemons(l, o)
 
 			if errors.IsDataUnreacheable(err) {
 				log.Fatal(err)
