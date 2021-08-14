@@ -1,5 +1,10 @@
 package gopoke
 
+import (
+	"fmt"
+	"strconv"
+)
+
 // Pokemon representation of pokemon into data struct
 type Pokemon struct {
 	PokemonID      int    `json:"id"`
@@ -40,6 +45,18 @@ func NewPokemonSimple(name, url string) (p PokemonSimple) {
 		Name: name,
 		Url:  url,
 	}
+
+	return
+}
+
+func (p Pokemon) ToSlice() (slice []string) {
+	slice = append(slice, fmt.Sprint(p.PokemonID), p.Name, fmt.Sprint(p.BaseExperience), fmt.Sprint(p.Height), strconv.FormatBool(p.IsDefault), fmt.Sprint(p.Order), fmt.Sprint(p.Weight))
+
+	return
+}
+
+func (p Pokemon) GetHeaders() (headers []string) {
+	headers = append(headers, "pokemon_id", "name", "base_experience", "height", "is_default", "order", "weight")
 
 	return
 }
