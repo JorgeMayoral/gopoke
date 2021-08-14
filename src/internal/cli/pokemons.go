@@ -3,10 +3,12 @@ package cli
 import (
 	"encoding/csv"
 	"fmt"
+	"log"
 	"os"
 	"strconv"
 
 	gopoke "github.com/JorgeMayoral/gopoke/src/internal"
+	"github.com/JorgeMayoral/gopoke/src/internal/errors"
 	"github.com/spf13/cobra"
 )
 
@@ -46,7 +48,12 @@ func runPokemonsFn(repository gopoke.PokemonRepo) CobraFn {
 
 		if id != "" {
 			i, _ := strconv.Atoi(id)
-			pokemon, _ := repository.GetPokemonById(i)
+			pokemon, err := repository.GetPokemonById(i)
+
+			if errors.IsDataUnreacheable(err) {
+				log.Fatal(err)
+			}
+
 			fmt.Printf("Pokemon ID: %v\nName: %v\nBaseExperience: %v\nHeight: %v\nIsDefault: %v\nOrder: %v\nWeight: %v\n", pokemon.PokemonID, pokemon.Name, pokemon.BaseExperience, pokemon.Height, pokemon.IsDefault, pokemon.Order, pokemon.Weight)
 
 			if output {
@@ -72,7 +79,11 @@ func runPokemonsFn(repository gopoke.PokemonRepo) CobraFn {
 		} else {
 			l, _ := strconv.Atoi(limit)
 			o, _ := strconv.Atoi(offset)
-			pokemons, _ := repository.GetPokemons(l, o)
+			pokemons, err := repository.GetPokemons(l, o)
+
+			if errors.IsDataUnreacheable(err) {
+				log.Fatal(err)
+			}
 
 			for _, p := range pokemons {
 				fmt.Printf("Name: %v\nUrl: %v\n\n", p.Name, p.Url)
