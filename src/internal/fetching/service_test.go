@@ -4,36 +4,70 @@ import (
 	"errors"
 	"testing"
 
+	gopoke "github.com/JorgeMayoral/gopoke/src/internal"
 	"github.com/JorgeMayoral/gopoke/src/internal/fetching"
-	"github.com/JorgeMayoral/gopoke/src/internal/storage/inmem"
+	mock "github.com/JorgeMayoral/gopoke/src/internal/storage/mocks"
+
+	"github.com/stretchr/testify/assert"
 )
 
 func TestFetchById(t *testing.T) {
 	tests := map[string]struct {
+		repo  gopoke.PokemonRepo
 		input int
 		want  int
 		err   error
 	}{
-		"valid pokemon":     {input: 25, want: 25, err: nil},
-		"not found pokemon": {input: 999999, err: errors.New("error")},
+		"valid pokemon":         {repo: buildMockPokemons(), input: 25, want: 25, err: nil},
+		"not found pokemon":     {repo: buildMockPokemons(), input: 999999, err: errors.New("error")},
+		"error with repository": {repo: buildMockError(), err: errors.New("error")},
 	}
-	repo := inmem.NewRepository()
-	service := fetching.NewService(repo)
 
 	for name, tc := range tests {
 		t.Run(name, func(t *testing.T) {
+			service := fetching.NewService(tc.repo)
+
 			b, err := service.FetchByID(tc.input)
-			if err != nil && tc.err == nil {
-				t.Fatalf("not expected any errors and got %v", err)
+
+			if tc.err != nil {
+				assert.Error(t, err)
 			}
 
-			if err == nil && tc.err != nil {
-				t.Error("expected an error and got nil")
+			if tc.err == nil {
+				assert.Nil(t, err)
 			}
 
-			if b.PokemonID != tc.want {
-				t.Fatalf("expected %d, got: %d", tc.want, b.PokemonID)
-			}
+			assert.Equal(t, tc.want, b.PokemonID)
 		})
 	}
+}
+
+func buildMockPokemons() gopoke.PokemonRepo {
+	mockedRepo := &mock.PokemonRepoMock{
+		GetPokemonByIdFunc: func(pokemonID int) (gopoke.Pokemon, error) {
+			return gopoke.Pokemon(
+				gopoke.NewPokemon(
+					25,
+					"pikachu",
+					112,
+					4,
+					true,
+					35,
+					60,
+				),
+			), nil
+		},
+	}
+
+	return mockedRepo
+}
+
+func buildMockError() gopoke.PokemonRepo {
+	mockedRepo := &mock.PokemonRepoMock{
+		GetPokemonByIdFunc: func(pokemonID int) (gopoke.Pokemon, error) {
+			return gopoke.Pokemon{}, errors.New("error")
+		},
+	}
+
+	return mockedRepo
 }
